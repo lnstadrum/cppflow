@@ -40,6 +40,31 @@ Model::Model(const std::string& model_filename, const std::vector<uint8_t>& conf
     this->status_check(true);
 }
 
+
+
+Model::Model(const std::string& saved_model_filename, const std::vector<const char*>& tags, const std::vector<uint8_t>& config_options) {
+    this->status = TF_NewStatus();
+    this->graph = TF_NewGraph();
+
+    // Create the session.
+    TF_SessionOptions* sess_opts = TF_NewSessionOptions();
+
+    if (!config_options.empty())
+    {
+        TF_SetConfig(sess_opts, static_cast<const void*>(config_options.data()), config_options.size(), this->status);
+        this->status_check(true);
+    }
+
+    // load saved model
+    this->session = TF_LoadSessionFromSavedModel(sess_opts, nullptr, saved_model_filename.c_str(), tags.data(), tags.size(), this->graph, nullptr, this->status);
+    TF_DeleteSessionOptions(sess_opts);
+
+    // Check the status
+    this->status_check(true);
+
+    this->status_check(true);
+}
+
 Model::~Model() {
     TF_DeleteSession(this->session, this->status);
     TF_DeleteGraph(this->graph);
